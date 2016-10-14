@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * @author Ignacio del Valle Alles idelvall@brutusin.org
  */
 
@@ -157,7 +157,7 @@ if (typeof brutusin === "undefined") {
 
         renderers["string"] = function (container, id, parentObject, propertyProvider, value) {
             /// TODO change the handler for when there is a 'media'
-            /// specifier so it becomes a file element. 
+            /// specifier so it becomes a file element.
             var schemaId = getSchemaId(id);
             var s = getSchema(schemaId);
             var input;
@@ -301,7 +301,7 @@ if (typeof brutusin === "undefined") {
 //        if (s.required) {
 //            input.required = true;
 //        }
-//       
+//
 //        if (s.minimum) {
 //            input.min = s.minimum;
 //        }
@@ -360,7 +360,7 @@ if (typeof brutusin === "undefined") {
                 option.value = s.oneOf[i];
                 appendChild(option, textNode, s);
                 appendChild(input, option, s);
-                if (value === undefined)
+                if (value === undefined || value === null)
                     continue;
                 if (s.readOnly)
                     input.disabled = true;
@@ -745,7 +745,7 @@ if (typeof brutusin === "undefined") {
             } else {
                 render(null, form, "$", null, null);
             }
-            rendered = true;
+            var rendered = true;
             if (dependencyMap.hasOwnProperty("$")) {
                 onDependencyChanged("$");
             }
@@ -928,10 +928,10 @@ if (typeof brutusin === "undefined") {
                 for (var i = 0; i < schema.dependsOn.length; i++) {
                     if (!schema.dependsOn[i]) {
                         arr[i] = "$";
-                        // Relative cases 
+                        // Relative cases
                     } else if (schema.dependsOn[i].startsWith("$")) {
                         arr[i] = schema.dependsOn[i];
-                        // Relative cases 
+                        // Relative cases
                     } else if (name.endsWith("]")) {
                         arr[i] = name + "." + schema.dependsOn[i];
                     } else {
