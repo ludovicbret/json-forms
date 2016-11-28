@@ -239,7 +239,7 @@ if (typeof brutusin === "undefined") {
                         }
                     } else {
                         if (s.pattern && !s.pattern.test(value)) {
-                            return BrutusinForms.messages["pattern"].format(s.pattern.source);
+                            return BrutusinForms.messages["pattern"].format(s.validationMessage);
                         }
                         if (s.minLength) {
                             if (!value || s.minLength > value.length) {
