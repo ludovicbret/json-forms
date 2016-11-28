@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * @author Ignacio del Valle Alles idelvall@brutusin.org
  */
 if ("undefined" === typeof brutusin || "undefined" === typeof brutusin["json-forms"]) {
@@ -50,7 +50,7 @@ if (("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === 
             }
         }
     });
-    
+
 
 // Description help icon
     BrutusinForms.addDecorator(function (element, schema) {
@@ -243,7 +243,7 @@ if (("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === 
                     element.setAttribute("data-trigger", dataTrigger);
                     element.setAttribute("data-content", dataContent);
                 } else {
-                    $(element).popover('destroy');
+                    $(element).popover('dispose');
                     element.removeAttribute("data-toggle");
                     element.removeAttribute("data-trigger");
                     element.removeAttribute("data-content");
