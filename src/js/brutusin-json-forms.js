@@ -75,8 +75,8 @@ if (typeof brutusin === "undefined") {
         "maximum": "Value must be **lower or equal than** `{0}`",
         "exclusiveMaximum": "Value must be **lower than** `{0}`",
         "minProperties": "At least `{0}` properties are required",
-        "maxProperties": "At most `{0}` properties are allowed"
-
+        "maxProperties": "At most `{0}` properties are allowed",
+        "uniqueItems": "Array items must be unique"
     };
 
     /**
@@ -211,7 +211,12 @@ if (typeof brutusin === "undefined") {
                         value = null;
                     }
                 } else if (s.format === "date-time") {
-                    input.type = "datetime-local";
+                    try {
+                        input.type = "datetime-local";
+                    } catch (err) {
+                        // #46, problem in IE11. TODO polyfill?
+                        input.type = "text";
+                    }
                 } else if (s.format === "email") {
                     input.type = "email";
                 } else if (s.format === "text") {
@@ -318,9 +323,39 @@ if (typeof brutusin === "undefined") {
         renderers["boolean"] = function (container, id, parentObject, propertyProvider, value) {
             var schemaId = getSchemaId(id);
             var s = getSchema(schemaId);
-            var input = document.createElement("input");
-            input.type = "checkbox";
-            input.schema = schemaId;
+            var input;
+            if (s.required) {
+                input = document.createElement("input");
+                input.type = "checkbox";
+                if (value === true) {
+                    input.checked = true;
+                }
+            } else {
+                input = document.createElement("select");
+                var emptyOption = document.createElement("option");
+                var textEmpty = document.createTextNode("");
+                textEmpty.value = "";
+                appendChild(emptyOption, textEmpty, s);
+                appendChild(input, emptyOption, s);
+
+                var optionTrue = document.createElement("option");
+                var textTrue = document.createTextNode("true");
+                textTrue.value = "true";
+                appendChild(optionTrue, textTrue, s);
+                appendChild(input, optionTrue, s);
+
+                var optionFalse = document.createElement("option");
+                var textFalse = document.createTextNode("false");
+                textFalse.value = "false";
+                appendChild(optionFalse, textFalse, s);
+                appendChild(input, optionFalse, s);
+
+                if (value === true) {
+                    input.selectedIndex = 1;
+                } else if (value === false) {
+                    input.selectedIndex = 2;
+                }
+            }
             input.onchange = function () {
                 if (parentObject) {
                     parentObject[propertyProvider.getValue()] = getValue(s, input);
@@ -329,9 +364,7 @@ if (typeof brutusin === "undefined") {
                 }
                 onDependencyChanged(schemaId, input);
             };
-            if (value === true) {
-                input.checked = true;
-            }
+            input.schema = schemaId;
             input.id = getInputId();
             inputCounter++;
             if (s.description) {
@@ -520,11 +553,13 @@ if (typeof brutusin === "undefined") {
                     var td1 = document.createElement("td");
                     td1.className = "prop-name";
                     var propId = id + "." + prop;
+                    var propSchema = getSchema(getSchemaId(propId));
                     var td2 = document.createElement("td");
                     td2.className = "prop-value";
-                    appendChild(tbody, tr, s);
-                    appendChild(tr, td1, s);
-                    appendChild(tr, td2, s);
+
+                    appendChild(tbody, tr, propSchema);
+                    appendChild(tr, td1, propSchema);
+                    appendChild(tr, td2, propSchema);
                     var pp = createStaticPropertyProvider(prop);
                     var propInitialValue = null;
                     if (value) {
@@ -606,7 +641,7 @@ if (typeof brutusin === "undefined") {
                     appendChild(div, addButton, s);
                     if (value) {
                         for (var p in value) {
-                            if (s.properties.hasOwnProperty(p)) {
+                            if (s.properties && s.properties.hasOwnProperty(p)) {
                                 continue;
                             }
                             if (usedProps.indexOf(p) !== -1) {
@@ -699,6 +734,15 @@ if (typeof brutusin === "undefined") {
                 if (s.maxItems && s.maxItems < table.rows.length) {
                     return BrutusinForms.messages["maxItems"].format(s.maxItems);
                 }
+                if (s.uniqueItems) {
+                    for (var i = 0; i < current.length; i++) {
+                        for (var j = i + 1; j < current.length; j++) {
+                            if (JSON.stringify(current[i]) === JSON.stringify(current[j])) {
+                                return BrutusinForms.messages["uniqueItems"];
+                            }
+                        }
+                    }
+                }
             };
             addButton.onclick = function () {
                 addItem(current, table, id + "[#]", null);
@@ -763,30 +807,36 @@ if (typeof brutusin === "undefined") {
         };
 
         obj.getData = function () {
-            function removeEmptiesAndNulls(object) {
+            function removeEmptiesAndNulls(object, schema) {
                 if (object instanceof Array) {
                     if (object.length === 0) {
                         return null;
                     }
                     var clone = new Array();
                     for (var i = 0; i < object.length; i++) {
-                        clone[i] = removeEmptiesAndNulls(object[i]);
+                        clone[i] = removeEmptiesAndNulls(object[i], schema.items);
                     }
                     return clone;
                 } else if (object === "") {
                     return null;
                 } else if (object instanceof Object) {
                     var clone = new Object();
+                    var nonEmpty = false;
                     for (var prop in object) {
                         if (prop.startsWith("$") && prop.endsWith("$")) {
                             continue;
                         }
-                        var value = removeEmptiesAndNulls(object[prop]);
+                        var value = removeEmptiesAndNulls(object[prop], schema.properties[prop]);
                         if (value !== null) {
                             clone[prop] = value;
+                            nonEmpty = true;
                         }
                     }
-                    return clone;
+                    if (nonEmpty || schema.required) {
+                        return clone;
+                    } else {
+                        return null;
+                    }
                 } else {
                     return object;
                 }
@@ -794,8 +844,7 @@ if (typeof brutusin === "undefined") {
             if (!container) {
                 return null;
             } else {
-                return removeEmptiesAndNulls(data);
-                ;
+                return removeEmptiesAndNulls(data, schema);
             }
         };
 
@@ -853,6 +902,7 @@ if (typeof brutusin === "undefined") {
             }
             return pseudoSchema;
         }
+
         function getDefinition(path) {
             var parts = path.split('/');
             var def = root;
@@ -867,6 +917,7 @@ if (typeof brutusin === "undefined") {
 
         function populateSchemaMap(name, schema) {
             var pseudoSchema = createPseudoSchema(schema);
+            pseudoSchema["$id"] = name;
             schemaMap[name] = pseudoSchema;
 
             if (schema.hasOwnProperty("oneOf")) {
@@ -1084,9 +1135,19 @@ if (typeof brutusin === "undefined") {
                     value = null;
                 }
             } else if (schema.type === "boolean") {
-                value = input.checked;
-                if (!value) {
-                    value = false;
+                if (input.tagName.toLowerCase() === "input") {
+                    value = input.checked;
+                    if (!value) {
+                        value = false;
+                    }
+                } else if (input.tagName.toLowerCase() === "select") {
+                    if (input.value === "true") {
+                        value = true;
+                    } else if (input.value === "false") {
+                        value = false;
+                    } else {
+                        value = null;
+                    }
                 }
             } else if (schema.type === "any") {
                 if (value) {
