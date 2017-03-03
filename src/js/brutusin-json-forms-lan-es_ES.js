@@ -1,3 +1,4 @@
+/*ignore jslint start*/
 if ("undefined" === typeof brutusin || "undefined" === typeof brutusin["json-forms"]) {
     throw new Error("brutusin-json-forms-bootstrap.js requires brutusin-json-forms.js");
 }
@@ -24,3 +25,4 @@ if ("undefined" === typeof brutusin || "undefined" === typeof brutusin["json-for
         "maxProperties": "Se admiten a lo sumo `{0}` propiedades"
     };
 }());
+/*ignore jslint end*/

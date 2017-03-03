@@ -1,3 +1,4 @@
+/*ignore jslint start*/
 /*
  * Copyright 2015 brutusin.org
  *
@@ -1383,3 +1384,4 @@ if (typeof brutusin === "undefined") {
     };
     brutusin["json-forms"] = BrutusinForms;
 }());
+/*ignore jslint end*/

@@ -1,3 +1,4 @@
+/*ignore jslint start*/
 /*
  * Copyright 2015 brutusin.org
  *
@@ -259,3 +260,4 @@ if (("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === 
                 200);
     }
 }());
+/*ignore jslint end*/
